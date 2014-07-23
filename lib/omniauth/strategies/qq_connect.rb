@@ -14,7 +14,6 @@ module OmniAuth
       }
 
       option :token_params, {
-        :state => 'foobar',
         :parse => :query
       }
 
@@ -30,14 +29,14 @@ module OmniAuth
         end
       end
 
-      info do 
-        { 
+      info do
+        {
           :nickname => raw_info['nickname'],
           :name => raw_info['nickname'],
           :image => raw_info['figureurl_1'],
         }
       end
-      
+
       extra do
         {
           :raw_info => raw_info
@@ -54,6 +53,19 @@ module OmniAuth
               :oauth_consumer_key => options[:client_id],
               :access_token => access_token.token
             }, :parse => :json).parsed
+        end
+      end
+
+      def authorize_params
+        super.tap do |params|
+          %w[display with_offical_account state forcelogin].each do |v|
+            if request.params[v]
+              params[v.to_sym] = request.params[v]
+
+              # to support omniauth-oauth2's auto csrf protection
+              session['omniauth.state'] = params[:state] if v == 'state'
+            end
+          end
         end
       end
     end
